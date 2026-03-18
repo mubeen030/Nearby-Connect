@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "709789620815",
+    "project_id": "nearby-connect-11c05",
+    "storage_bucket": "nearby-connect-11c05.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709789620815:android:520733cb261174fc29a83a",
+        "android_client_info": {
+          "package_name": "Nearby.Connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPPCZ30KiNG3-wnk9CDO-nDghumYECMXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:709789620815:android:8165071219e29ce529a83a",
+        "android_client_info": {
+          "package_name": "com.example.nearby_connect"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDPPCZ30KiNG3-wnk9CDO-nDghumYECMXI"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
