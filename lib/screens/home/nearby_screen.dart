@@ -77,10 +77,11 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                           },
                         ),
                         const Spacer(),
+                        // ✅ Fixed refresh button
                         IconButton(
                           icon: const Icon(Icons.refresh),
-                          onPressed: () async {
-                            // refresh location
+                          onPressed: () {
+                            ref.invalidate(locationUpdateProvider);
                           },
                         ),
                       ],
@@ -88,7 +89,9 @@ class _NearbyScreenState extends ConsumerState<NearbyScreen> {
                   ),
                   Expanded(
                     child: filtered.isEmpty
-                        ? const Center(child: Text('No people found in this radius.'))
+                        ? const Center(
+                            child: Text('No people found in this radius.'),
+                          )
                         : ListView.builder(
                             itemCount: filtered.length,
                             itemBuilder: (context, index) {
@@ -153,7 +156,10 @@ class _NearbyUserCard extends StatelessWidget {
             ? Container(
                 width: 10,
                 height: 10,
-                decoration: BoxDecoration(color: Colors.green, shape: BoxShape.circle),
+                decoration: BoxDecoration(
+                  color: Colors.green,
+                  shape: BoxShape.circle,
+                ),
               )
             : null,
         onTap: onTap,

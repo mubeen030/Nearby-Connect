@@ -21,31 +21,39 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
 
   Future<void> _pickProfilePhoto(String userId) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    final picked = await picker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 70,
+    );
     if (picked == null) return;
 
-    setState(() {
-      _isLoading = true;
-    });
+    setState(() => _isLoading = true);
 
-    final storage = ref.read(storageServiceProvider);
-    final url = await storage.uploadUserPhoto(userId, File(picked.path));
+    try {
+      final storage = ref.read(storageServiceProvider);
+      final url = await storage.uploadUserPhoto(userId, File(picked.path));
 
-    final firestore = ref.read(firestoreServiceProvider);
-    await firestore.createOrUpdateUser(
-      await ref.read(currentAppUserProvider.future).then((user) => user!.copyWith(photoUrl: url)),
-    );
+      final currentUser = ref.read(currentAppUserProvider).value;
+      if (currentUser == null) return;
 
-    setState(() {
-      _isLoading = false;
-    });
+      final firestore = ref.read(firestoreServiceProvider);
+      await firestore.createOrUpdateUser(
+        currentUser.copyWith(photoUrl: url),
+      );
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to update photo: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   Future<void> _logout() async {
     await ref.read(authServiceProvider).signOut();
-    if (mounted) {
-      context.go(Routes.login);
-    }
+    if (mounted) context.go(Routes.login);
   }
 
   @override
@@ -79,8 +87,12 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                     children: [
                       CircleAvatar(
                         radius: 48,
-                        backgroundImage: user.photoUrl.isNotEmpty ? NetworkImage(user.photoUrl) : null,
-                        child: user.photoUrl.isEmpty ? const Icon(Icons.person, size: 48) : null,
+                        backgroundImage: user.photoUrl.isNotEmpty
+                            ? NetworkImage(user.photoUrl)
+                            : null,
+                        child: user.photoUrl.isEmpty
+                            ? const Icon(Icons.person, size: 48)
+                            : null,
                       ),
                       Positioned(
                         bottom: 0,
@@ -105,10 +117,16 @@ class _ProfileScreenState extends ConsumerState<ProfileScreen> {
                 Text(user.email, style: Theme.of(context).textTheme.bodyLarge),
                 const SizedBox(height: 12),
                 Text('Status', style: Theme.of(context).textTheme.labelLarge),
-                Text(user.onlineStatus ? 'Online' : 'Offline', style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  user.onlineStatus ? 'Online' : 'Offline',
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 12),
                 Text('Last seen', style: Theme.of(context).textTheme.labelLarge),
-                Text(user.lastSeen.toLocal().toString(), style: Theme.of(context).textTheme.bodyLarge),
+                Text(
+                  user.lastSeen.toLocal().toString(),
+                  style: Theme.of(context).textTheme.bodyLarge,
+                ),
                 const SizedBox(height: 24),
                 if (_isLoading) const LinearProgressIndicator(),
                 SwitchListTile(

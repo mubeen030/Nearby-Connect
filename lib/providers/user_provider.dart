@@ -20,3 +20,21 @@ final currentAppUserProvider = StreamProvider<AppUser?>((ref) {
     error: (error, stack) => const Stream.empty(),
   );
 });
+  final locationUpdateProvider = FutureProvider<void>((ref) async {
+    final authState = ref.watch(currentFirebaseUserProvider);
+    final user = authState.value;
+    if (user == null) return;
+
+    final location = ref.read(locationServiceProvider);
+    final firestore = ref.read(firestoreServiceProvider);
+
+    final hasPermission = await location.requestPermissions();
+    if (!hasPermission) return;
+
+    final position = await location.getCurrentPosition();
+    await firestore.updateUserLocation(
+      user.uid,
+      position.latitude,
+      position.longitude,
+    );
+  });

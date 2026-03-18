@@ -1,8 +1,8 @@
-import 'dart:async';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_map/flutter_map.dart'; // Replaces google_maps_flutter
+import 'package:latlong2/latlong.dart'; // Required for coordinates in flutter_map
+
 import 'package:nearby_connect/models/user_model.dart';
 import 'package:nearby_connect/providers/service_providers.dart';
 import 'package:nearby_connect/providers/user_provider.dart';
@@ -15,7 +15,8 @@ class MapScreen extends ConsumerStatefulWidget {
 }
 
 class _MapScreenState extends ConsumerState<MapScreen> {
-  final Completer<GoogleMapController> _mapController = Completer();
+  // Changed from Completer<GoogleMapController> to MapController
+  final MapController _mapController = MapController();
 
   @override
   Widget build(BuildContext context) {
@@ -43,37 +44,93 @@ class _MapScreenState extends ConsumerState<MapScreen> {
               }
 
               final users = snapshot.data ?? [];
-              final markers = <Marker>{
+              
+              // flutter_map uses a List of Markers instead of a Set
+              final List<Marker> markers = [];
+
+              // 1. Add Current User Marker (Blue)
+              markers.add(
                 Marker(
-                  markerId: MarkerId('me'),
-                  position: LatLng(currentUser.latitude, currentUser.longitude),
-                  infoWindow: InfoWindow(title: 'You', snippet: currentUser.name),
-                  icon: BitmapDescriptor.defaultMarkerWithHue(BitmapDescriptor.hueAzure),
+                  point: LatLng(currentUser.latitude, currentUser.longitude),
+                  width: 80, // Width for the custom widget
+                  height: 80,
+                  alignment: Alignment.topCenter,
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                        decoration: BoxDecoration(color: Colors.blue, borderRadius: BorderRadius.circular(4)),
+                        child: const Text('You', style: TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold)),
+                      ),
+                      const Icon(Icons.person_pin_circle, color: Colors.blue, size: 40),
+                    ],
+                  ),
                 ),
-              };
+              );
 
-              markers.addAll(users.map((user) {
-                return Marker(
-                  markerId: MarkerId(user.userId),
-                  position: LatLng(user.latitude, user.longitude),
-                  infoWindow: InfoWindow(title: user.name, snippet: user.email),
+              // 2. Add Nearby Users Markers (Red)
+              for (var user in users) {
+                markers.add(
+                  Marker(
+                    point: LatLng(user.latitude, user.longitude),
+                    width: 80,
+                    height: 80,
+                    alignment: Alignment.topCenter,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          decoration: BoxDecoration(color: Colors.redAccent, borderRadius: BorderRadius.circular(4)),
+                          child: Text(user.name, style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold), overflow: TextOverflow.ellipsis),
+                        ),
+                        const Icon(Icons.location_on, color: Colors.redAccent, size: 40),
+                      ],
+                    ),
+                  ),
                 );
-              }));
+              }
 
-              return GoogleMap(
-                initialCameraPosition: CameraPosition(
-                  target: LatLng(currentUser.latitude, currentUser.longitude),
-                  zoom: 13,
-                ),
-                markers: markers,
-                myLocationEnabled: true,
-                myLocationButtonEnabled: true,
-                zoomControlsEnabled: false,
-                onMapCreated: (controller) {
-                  if (!_mapController.isCompleted) {
-                    _mapController.complete(controller);
-                  }
-                },
+              return Stack(
+                children: [
+                  // --- THE MAP ---
+                  FlutterMap(
+                    mapController: _mapController,
+                    options: MapOptions(
+                      initialCenter: LatLng(currentUser.latitude, currentUser.longitude),
+                      initialZoom: 13.0,
+                    ),
+                    children: [
+                      // Free Google Maps Tile Server (Hybrid: Satellite + Streets)
+                      TileLayer(
+                        urlTemplate: 'https://mt1.google.com/vt/lyrs=y&x={x}&y={y}&z={z}',
+                        userAgentPackageName: 'com.example.nearby_connect', // Best practice to set this
+                      ),
+                      // Layer to display the users
+                      MarkerLayer(
+                        markers: markers,
+                      ),
+                    ],
+                  ),
+
+                  // --- MY LOCATION BUTTON ---
+                  // flutter_map doesn't have myLocationButtonEnabled built-in, so we add a FAB
+                  Positioned(
+                    bottom: 20,
+                    right: 20,
+                    child: FloatingActionButton(
+                      backgroundColor: Colors.white,
+                      onPressed: () {
+                        _mapController.move(
+                          LatLng(currentUser.latitude, currentUser.longitude), 
+                          15.0 // Zoom level when re-centering
+                        );
+                      },
+                      child: const Icon(Icons.my_location, color: Colors.blue),
+                    ),
+                  ),
+                ],
               );
             },
           );

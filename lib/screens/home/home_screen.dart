@@ -1,17 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:nearby_connect/providers/user_provider.dart';
 import 'package:nearby_connect/screens/home/nearby_screen.dart';
 import 'package:nearby_connect/screens/map/map_screen.dart';
 import 'package:nearby_connect/screens/chat/chats_screen.dart';
 import 'package:nearby_connect/screens/profile/profile_screen.dart';
 
-class HomeScreen extends StatefulWidget {
+class HomeScreen extends ConsumerStatefulWidget {
   const HomeScreen({super.key});
 
   @override
-  State<HomeScreen> createState() => _HomeScreenState();
+  ConsumerState<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> {
+class _HomeScreenState extends ConsumerState<HomeScreen> {
   int _currentIndex = 0;
 
   static const _tabs = <Widget>[
@@ -20,6 +22,14 @@ class _HomeScreenState extends State<HomeScreen> {
     ChatsScreen(),
     ProfileScreen(),
   ];
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(locationUpdateProvider);
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,10 +46,22 @@ class _HomeScreenState extends State<HomeScreen> {
           });
         },
         destinations: const [
-          NavigationDestination(icon: Icon(Icons.location_on), label: 'Nearby'),
-          NavigationDestination(icon: Icon(Icons.map), label: 'Map'),
-          NavigationDestination(icon: Icon(Icons.chat), label: 'Chats'),
-          NavigationDestination(icon: Icon(Icons.person), label: 'Profile'),
+          NavigationDestination(
+            icon: Icon(Icons.location_on),
+            label: 'Nearby',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.map),
+            label: 'Map',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.chat),
+            label: 'Chats',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.person),
+            label: 'Profile',
+          ),
         ],
       ),
     );
